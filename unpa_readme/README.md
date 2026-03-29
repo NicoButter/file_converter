@@ -1,18 +1,30 @@
 <div align="center">
 
-# UNPA — UARG
+<img src="https://capsule-render.vercel.app/api?type=venom&color=0:0f172a,50:1e3a8a,100:3b82f6&height=200&section=header&text=UNPA%20%E2%80%94%20UARG&fontSize=50&fontColor=ffffff&fontAlignY=35&desc=Universidad%20Nacional%20de%20la%20Patagonia%20Austral%20%C2%B7%20Unidad%20Acad%C3%A9mica%20R%C3%ADo%20Gallegos&descSize=16&descAlignY=55&descColor=94a3b8&animation=fadeIn" width="100%">
 
-### Universidad Nacional de la Patagonia Austral · Unidad Académica Río Gallegos
+<br>
 
-*Formando profesionales desde el sur argentino.*
+> **Formando profesionales desde el sur argentino** 🇦🇷
+>
+> Educación pública · Tecnología · Comunidad
 
-[![Sitio web](https://img.shields.io/badge/Web-uarg.unpa.edu.ar-1e40af?style=for-the-badge&logo=google-chrome&logoColor=white)](https://www.uarg.unpa.edu.ar/)
-[![GitHub](https://img.shields.io/badge/GitHub-uarg--unpa-111827?style=for-the-badge&logo=github&logoColor=white)](https://github.com/uarg-unpa)
-[![Instagram](https://img.shields.io/badge/Instagram-@unpa.uarg-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/unpa.uarg/)
+<br>
+
+[![Sitio web](https://img.shields.io/badge/🌐_Sitio_Web-uarg.unpa.edu.ar-0f172a?style=for-the-badge&labelColor=1e3a8a)](https://www.uarg.unpa.edu.ar/)
+&nbsp;
+[![GitHub](https://img.shields.io/badge/💻_GitHub-uarg--unpa-0f172a?style=for-the-badge&labelColor=111827)](https://github.com/uarg-unpa)
+&nbsp;
+[![Instagram](https://img.shields.io/badge/📸_Instagram-@unpa.uarg-0f172a?style=for-the-badge&labelColor=7c3aed)](https://www.instagram.com/unpa.uarg/)
+
+<br>
+
+![Repos](https://img.shields.io/badge/Repositorios-+138-blue?style=flat-square&labelColor=1e293b)
+&nbsp;
+![Status](https://img.shields.io/badge/Estado-Activo-brightgreen?style=flat-square&labelColor=1e293b)
+&nbsp;
+![Licencia](https://img.shields.io/badge/Educación-Pública-f59e0b?style=flat-square&labelColor=1e293b)
 
 </div>
-
----
 
 ## Acerca de
 
@@ -31,7 +43,6 @@ Somos docentes, estudiantes y graduados de la **UNPA — UARG**, construyendo co
 - [Guía de contribución](#guía-de-contribución)
 - [Convención de commits](#convención-de-commits)
 - [Sobre esta organización](#sobre-esta-organización)
-- [Contacto](#contacto)
 
 ---
 
@@ -131,21 +142,32 @@ git commit -m "feat: agregar autenticación de usuarios"
 
 ---
 
-## Contacto
-
-| Canal | Enlace |
-|-------|--------|
-| **Correo institucional** | fherrera@uarg.unpa.edu.ar |
-| **Sitio web** | [uarg.unpa.edu.ar](https://www.uarg.unpa.edu.ar/) |
-| **Instagram** | [@unpa.uarg](https://www.instagram.com/unpa.uarg/) |
-| **Facebook** | [Extensión UARG](https://www.facebook.com/extension.unpauarg) |
-| **X (Twitter)** | [@unpariogallegos](https://twitter.com/unpariogallegos) |
-| **YouTube** | [Canal UARG](https://www.youtube.com/channel/UCUJ5nKOkYgAvtewO1uWM92A) |
-
----
-
 <div align="center">
 
-*Mantenido por la comunidad académica de la UNPA — UARG · Río Gallegos, Santa Cruz, Argentina*
+<br>
+
+[![Web](https://img.shields.io/badge/uarg.unpa.edu.ar-1e3a8a?style=flat-square&logo=google-chrome&logoColor=white)](https://www.uarg.unpa.edu.ar/)
+&nbsp;
+[![Email](https://img.shields.io/badge/fherrera@uarg.unpa.edu.ar-1e3a8a?style=flat-square&logo=gmail&logoColor=white)](mailto:fherrera@uarg.unpa.edu.ar)
+&nbsp;
+[![GitHub](https://img.shields.io/badge/uarg--unpa-111827?style=flat-square&logo=github&logoColor=white)](https://github.com/uarg-unpa)
+&nbsp;
+[![Instagram](https://img.shields.io/badge/@unpa.uarg-E4405F?style=flat-square&logo=instagram&logoColor=white)](https://www.instagram.com/unpa.uarg/)
+&nbsp;
+[![Facebook](https://img.shields.io/badge/Extensión_UARG-1877F2?style=flat-square&logo=facebook&logoColor=white)](https://www.facebook.com/extension.unpauarg)
+&nbsp;
+[![YouTube](https://img.shields.io/badge/Canal_UARG-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://www.youtube.com/channel/UCUJ5nKOkYgAvtewO1uWM92A)
+&nbsp;
+[![X](https://img.shields.io/badge/@unpariogallegos-000000?style=flat-square&logo=x&logoColor=white)](https://twitter.com/unpariogallegos)
+
+<br>
+
+<sub>📍 Río Gallegos, Santa Cruz, Argentina · Mantenido por la comunidad académica · © 2026 UNPA — UARG</sub>
+
+<br>
+
+<img src="https://capsule-render.vercel.app/api?type=rect&color=gradient&customColorList=0,2,2,5,30&height=3&section=footer" width="100%">
+
+<img src="https://capsule-render.vercel.app/api?type=transparent&color=0f172a&height=40&section=footer&text=UNPA%20%E2%80%94%20UARG&fontSize=14&fontColor=64748b" width="100%">
 
 </div>
