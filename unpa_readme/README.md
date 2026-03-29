@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=venom&color=0:0f172a,50:1e3a8a,100:3b82f6&height=200&section=header&text=UNPA%20%E2%80%94%20UARG&fontSize=50&fontColor=ffffff&fontAlignY=35&desc=Universidad%20Nacional%20de%20la%20Patagonia%20Austral%20%C2%B7%20Unidad%20Acad%C3%A9mica%20R%C3%ADo%20Gallegos&descSize=16&descAlignY=55&descColor=94a3b8&animation=fadeIn" width="100%">
+<img src="https://capsule-render.vercel.app/api?type=soft&color=0:0f172a,50:1e3a8a,100:3b82f6&height=300&section=header&text=UNPA%20—%20UARG&fontSize=60&fontColor=ffffff&fontAlignY=30&desc=Universidad%20Nacional%20de%20la%20Patagonia%20Austral&descSize=20&descAlignY=50&descColor=cbd5e1&animation=fadeIn" width="100%">
 
 <br>
 
-> **Formando profesionales desde el sur argentino** 🇦🇷
->
-> Educación pública · Tecnología · Comunidad
+<h4>Unidad Académica Río Gallegos · Patagonia Austral · Argentina</h4>
+
+*Formando profesionales desde el sur argentino* 🇦🇷
 
 <br>
 
