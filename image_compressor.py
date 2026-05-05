@@ -19,7 +19,9 @@ Autor: Nicolas Butterfield (nicobutter@gmail.com)
 from __future__ import annotations
 
 import os
+import shutil
 from typing import List, Tuple
+from functools import partial
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 
@@ -30,24 +32,29 @@ BORRAR_ORIGINAL: bool = False
 THREADS: int = 8
 
 
-def convertir_imagen(ruta_original: str) -> None:
-    """Convierte una imagen a WebP si produce ahorro de espacio.
+def convertir_imagen(ruta_original: str, dir_origen: str, dir_destino: str) -> None:
+    """Convierte una imagen a WebP si produce ahorro de espacio, copiándola al directorio destino.
 
     Parámetros:
         ruta_original: Ruta al archivo de imagen de entrada.
+        dir_origen: Directorio raíz de origen para mantener la estructura de carpetas.
+        dir_destino: Directorio raíz de destino donde se guardarán las imágenes.
 
     Comportamiento:
-        - Genera un archivo con la misma ruta y extensión `.webp`.
-        - Si el archivo WebP es más pequeño que el original, mantiene el WebP
-          y (opcionalmente) borra el original si `BORRAR_ORIGINAL` es True.
-        - Si no mejora, elimina el WebP temporal y deja el original.
-
-    Nota:
-        El manejo de errores se realiza por impresión simple en consola.
+        - Mantiene la estructura de carpetas del origen en el directorio destino.
+        - Genera un archivo con extensión `.webp` en destino.
+        - Si el archivo WebP es más pequeño que el original, lo mantiene.
+        - Si no mejora, elimina el WebP temporal en destino y copia el original a destino.
     """
 
-    nombre_base, _ = os.path.splitext(ruta_original)
-    ruta_webp = nombre_base + ".webp"
+    # Mantener la estructura de carpetas de origen en el destino
+    rel_path = os.path.relpath(ruta_original, dir_origen)
+    ruta_destino_base = os.path.join(dir_destino, os.path.dirname(rel_path))
+    os.makedirs(ruta_destino_base, exist_ok=True)
+
+    nombre_base, ext = os.path.splitext(os.path.basename(ruta_original))
+    ruta_webp = os.path.join(ruta_destino_base, nombre_base + ".webp")
+    ruta_destino_original = os.path.join(ruta_destino_base, nombre_base + ext)
 
     try:
         with Image.open(ruta_original) as img:
@@ -58,13 +65,12 @@ def convertir_imagen(ruta_original: str) -> None:
 
         if size_webp < size_original:
             print(f"✔ {ruta_original} → {ruta_webp} ({size_original} → {size_webp})")
-            if BORRAR_ORIGINAL:
-                os.remove(ruta_original)
         else:
             os.remove(ruta_webp)
-            print(f"✘ {ruta_original} (webp no mejora)")
+            shutil.copy2(ruta_original, ruta_destino_original)
+            print(f"✘ {ruta_original} (webp no mejora, copiado original a destino)")
 
-    except Exception as e:  # pragma: no cover - comportamiento de tiempo de ejecución
+    except Exception as e:  # pragma: no cover
         print(f"Error con {ruta_original}: {e}")
 
 
@@ -119,9 +125,13 @@ def renombrar_archivos(directorio: str) -> None:
 def _main() -> None:
     """Punto de entrada principal para ejecución como script."""
 
-    directorio = "imagenes"  # carpeta base
+    directorio = "source"  # carpeta base de origen
+    directorio_destino = "output" # carpeta base de destino
+    
     if not os.path.exists(directorio):
         os.makedirs(directorio)
+    if not os.path.exists(directorio_destino):
+        os.makedirs(directorio_destino)
 
     while True:
         print("\n--- MENÚ PRINCIPAL ---")
@@ -134,8 +144,15 @@ def _main() -> None:
         if opcion == "1":
             imagenes = buscar_imagenes(directorio)
             print(f"Encontradas {len(imagenes)} imágenes")
+            
+            # Crear directorio destino si no existe
+            if not os.path.exists(directorio_destino) and imagenes:
+                os.makedirs(directorio_destino)
+            
+            funcion_convertir = partial(convertir_imagen, dir_origen=directorio, dir_destino=directorio_destino)
+            
             with ThreadPoolExecutor(max_workers=THREADS) as executor:
-                executor.map(convertir_imagen, imagenes)
+                executor.map(funcion_convertir, imagenes)
             print("Optimización terminada 🚀")
         elif opcion == "2":
             renombrar_archivos(directorio)
