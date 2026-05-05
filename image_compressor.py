@@ -140,22 +140,42 @@ def _main() -> None:
         print("3. Salir")
         
         opcion = input("Seleccione una opción: ")
+
+        if opcion in ["1", "2"]:
+            usar_default = input("¿Usar la carpeta por defecto 'source'? (S/n): ").strip().lower()
+            if usar_default == 'n':
+                dir_origen = input("Ingrese la ruta absoluta o relativa del directorio de imágenes: ").strip()
+                if not os.path.exists(dir_origen):
+                    print(f"El directorio '{dir_origen}' no existe. Volviendo al menú...")
+                    continue
+                # El destino será una subcarpeta 'output_convertidas' dentro de la carpeta elegida
+                dir_destino = os.path.join(dir_origen, "output_convertidas")
+            else:
+                dir_origen = directorio
+                dir_destino = directorio_destino
         
         if opcion == "1":
-            imagenes = buscar_imagenes(directorio)
-            print(f"Encontradas {len(imagenes)} imágenes")
+            imagenes = buscar_imagenes(dir_origen)
+            print(f"Encontradas {len(imagenes)} imágenes en {dir_origen}")
             
             # Crear directorio destino si no existe
-            if not os.path.exists(directorio_destino) and imagenes:
-                os.makedirs(directorio_destino)
+            if not os.path.exists(dir_destino) and imagenes:
+                try:
+                    os.makedirs(dir_destino)
+                except PermissionError:
+                    print("Error: No tienes permisos para crear carpetas en este directorio. Ejecuta con permisos de administrador o elige otro directorio.")
+                    continue
+                except Exception as e:
+                    print(f"Error al crear directorio destino: {e}")
+                    continue
             
-            funcion_convertir = partial(convertir_imagen, dir_origen=directorio, dir_destino=directorio_destino)
+            funcion_convertir = partial(convertir_imagen, dir_origen=dir_origen, dir_destino=dir_destino)
             
             with ThreadPoolExecutor(max_workers=THREADS) as executor:
                 executor.map(funcion_convertir, imagenes)
-            print("Optimización terminada 🚀")
+            print(f"Optimización terminada 🚀. Resultados en: {dir_destino}")
         elif opcion == "2":
-            renombrar_archivos(directorio)
+            renombrar_archivos(dir_origen)
         elif opcion == "3":
             print("Saliendo del programa...")
             break
