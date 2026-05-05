@@ -33,7 +33,9 @@ Image Compressor es una utilidad de línea de comandos diseñada para optimizar 
 ## Características
 
 - **Conversión inteligente**: Convierte imágenes (JPG, JPEG, PNG) a formato WebP con mejor ratio de compresión
+- **Renombrado Seguro (2 Fases)**: Sistema de renombrado por lotes que utiliza nombres temporales (UUID) para evitar colisiones accidentales.
 - **Procesamiento paralelo**: Implementación multi-hilo para optimizar tiempos de procesamiento
+- **Interfaz Visual**: Soporte opcional para barras de progreso mediante `tqdm` para una mejor experiencia de usuario.
 - **Validación comparativa**: Compara tamaños de archivo y preserva la versión original si no hay mejora
 - **Recorrido recursivo**: Procesa automáticamente subdirectorios
 - **Altamente configurable**: Control fino sobre calidad, retención de originales y concurrencia
@@ -45,7 +47,9 @@ Image Compressor es una utilidad de línea de comandos diseñada para optimizar 
 - **Python**: 3.8 o superior
 - **Sistema Operativo**: Linux, macOS, Windows
 - **Espacio en disco**: Suficiente para almacenar archivos convertidos (recomendado duplicar espacio de originales)
-- **Dependencias**: Pillow (PIL)
+- **Dependencias**:
+  - `Pillow` (PIL) - Requerido para la conversión de imágenes.
+  - `tqdm` - Opcional para barras de progreso (el script funciona sin ella).
 
 ---
 
@@ -104,6 +108,25 @@ proyecto/
 
 ---
 
+## Menú de Opciones
+
+El script incluye un menú interactivo con las siguientes opciones:
+
+1. **Convertir imágenes a WebP**: Escanea la carpeta de origen y optimiza las imágenes.
+2. **Renombrar archivos por lote**: Renombrado masivo y recursivo con sistema anti-colisiones.
+3. **Convertir y renombrar**: Ejecuta ambas tareas secuencialmente.
+4. **Salir**.
+
+---
+
+## Renombrado Seguro
+
+El sistema de renombrado utiliza una **estrategia de dos fases**:
+1. **Fase 1**: Todos los archivos se renombran a un identificador único temporal (UUID). Esto libera los nombres originales y evita conflictos si el nombre final ya existe.
+2. **Fase 2**: Los archivos temporales se renombran al formato final: `{prefijo}_{index:03d}{extension}`.
+
+---
+
 ## Configuración
 
 Edite el archivo `image_compressor.py` para ajustar los siguientes parámetros:
@@ -140,6 +163,14 @@ THREADS = 8            # Ajustar según núcleos disponibles
 - Ajustar `THREADS` al número de núcleos disponibles
 - Usar `CALIDAD=70-75` para mayor compresión en imágenes no profesionales
 - Usar `CALIDAD=85-90` para fotografía de alta fidelidad
+
+---
+
+## Autor
+
+**Nicolas Butterfield**
+- GitHub: [@nicobutter](https://github.com/nicobutter)
+- Email: nicobutter@gmail.com
 
 ---
 

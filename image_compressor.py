@@ -137,57 +137,56 @@ def renombrar_archivos(directorio: str) -> None:
     """
     prefijo = input("Ingrese el prefijo para los archivos: ").strip()
     if not prefijo:
-        print("Error: Prefijo inválido.")
+        log("Error: Prefijo inválido.")
         return
 
     # Recopilar todos los archivos recursivamente
-    rutas_originales = []
+    archivos: list[str] = []
     for root, _, files in os.walk(directorio):
         for f in files:
-            rutas_originales.append(os.path.join(root, f))
+            archivos.append(os.path.join(root, f))
 
-    if not rutas_originales:
-        print("No se encontraron archivos para renombrar.")
+    if not archivos:
+        log("No se encontraron archivos para renombrar.")
         return
 
     # Ordenar determinísticamente
-    rutas_originales.sort()
+    archivos.sort(key=lambda x: os.path.basename(x).lower())
 
-    # FASE 1: Renombrar a nombres temporales únicos (evita cualquier colisión)
-    print(f"--- Fase 1: Creando nombres temporales para {len(rutas_originales)} archivos ---")
-    archivos_temporales = []  # Lista de (ruta_temporal, extension)
+    total = len(archivos)
+    padding = max(3, len(str(total)))
 
-    for ruta in rutas_originales:
+    log(f"\n--- Fase 1: Creando nombres temporales para {total} archivos ---")
+    temporales: list[tuple[str, str]] = []
+
+    # FASE 1: Renombrar a nombres temporales únicos
+    for ruta in iterar_con_progreso(archivos, "Fase 1"):
         dir_padre = os.path.dirname(ruta)
         _, ext = os.path.splitext(ruta)
         
-        # Generar nombre temporal garantizado como único con UUID
         nombre_temp = f"__tmp_collision_safe_{uuid.uuid4().hex}{ext}"
         ruta_temp = os.path.join(dir_padre, nombre_temp)
         
         try:
             os.rename(ruta, ruta_temp)
-            archivos_temporales.append((ruta_temp, ext))
-            print(f"Temp: {os.path.basename(ruta)} -> {nombre_temp}")
+            temporales.append((ruta_temp, ext))
         except Exception as e:
-            print(f"Error crítico en Fase 1 al procesar {ruta}: {e}")
+            log(f"Error crítico en Fase 1 al procesar {ruta}: {e}")
 
     # FASE 2: Renombrar de temporal a nombre final secuencial
-    print(f"\n--- Fase 2: Aplicando nombres finales ({prefijo}_NNN) ---")
+    log(f"\n--- Fase 2: Aplicando nombres finales ({prefijo}_NNN) ---")
     
-    for i, (ruta_temp, ext) in enumerate(archivos_temporales):
+    for i, (ruta_temp, ext) in enumerate(iterar_con_progreso(temporales, "Fase 2")):
         dir_padre = os.path.dirname(ruta_temp)
-        # Formato final con índice de 3 dígitos (configurable a 2 si se desea)
-        nombre_final = f"{prefijo}_{i:03d}{ext}"
+        nombre_final = f"{prefijo}_{i:0{padding}d}{ext}"
         ruta_final = os.path.join(dir_padre, nombre_final)
         
         try:
             os.rename(ruta_temp, ruta_final)
-            print(f"Final: {os.path.basename(ruta_temp)} -> {nombre_final}")
         except Exception as e:
-            print(f"Error crítico en Fase 2 al procesar {ruta_temp}: {e}")
+            log(f"Error crítico en Fase 2 al procesar {ruta_temp}: {e}")
 
-    print("\nProceso de renombrado completado con éxito 🚀")
+    log("\nProceso de renombrado completado con éxito 🚀")
 
 
 def _main() -> None:
