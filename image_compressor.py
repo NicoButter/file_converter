@@ -20,10 +20,38 @@ from __future__ import annotations
 
 import os
 import shutil
-from typing import List, Tuple
+import uuid
+from collections import defaultdict
+from typing import List, Tuple, Dict, Iterable, TypeVar, Iterator
 from functools import partial
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
+
+T = TypeVar("T")
+
+# --- tqdm opcional ---
+try:
+    from tqdm import tqdm  # type: ignore
+except ImportError:
+    tqdm = None
+
+
+def iterar_con_progreso(iterable: Iterable[T], desc: str) -> Iterator[T]:
+    """Envuelve un iterable con una barra de progreso si tqdm está disponible."""
+    if tqdm:
+        return tqdm(iterable, desc=desc, unit="archivo")
+    else:
+        print(f"{desc}...")
+        return iter(iterable)
+
+
+def log(msg: str) -> None:
+    """Imprime un mensaje compatible con tqdm o print estándar."""
+    if tqdm:
+        tqdm.write(msg)
+    else:
+        print(msg)
+
 
 # --- Configuración ---
 EXTENSIONES: Tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp")
@@ -98,35 +126,68 @@ def buscar_imagenes(directorio: str) -> List[str]:
 
 
 def renombrar_archivos(directorio: str) -> None:
-    """Renombra todos los archivos en el directorio secuencialmente con un prefijo."""
-    prefijo = input("Ingrese el prefijo para los archivos (ej. foto_familiar): ")
+    """Renombra TODOS los archivos en el directorio de forma recursiva y segura.
+
+    Implementa una estrategia de dos fases para evitar colisiones de nombres:
+    Fase 1: Mueve cada archivo a un nombre temporal único (UUID).
+    Fase 2: Renombra los temporales al formato final {prefijo}_{indice:03d}{ext}.
+
+    Argumentos:
+        directorio: Ruta del directorio raíz para procesar.
+    """
+    prefijo = input("Ingrese el prefijo para los archivos: ").strip()
     if not prefijo:
-        print("Prefijo inválido.")
+        print("Error: Prefijo inválido.")
         return
 
-    archivos = []
+    # Recopilar todos los archivos recursivamente
+    rutas_originales = []
     for root, _, files in os.walk(directorio):
         for f in files:
-            archivos.append(os.path.join(root, f))
-    
-    if not archivos:
+            rutas_originales.append(os.path.join(root, f))
+
+    if not rutas_originales:
         print("No se encontraron archivos para renombrar.")
         return
 
-    archivos.sort()
-    for idx, ruta_original in enumerate(archivos):
-        dir_archivo = os.path.dirname(ruta_original)
-        _, ext = os.path.splitext(ruta_original)
-        nuevo_nombre = f"{prefijo}_{idx:02d}{ext}"
-        nueva_ruta = os.path.join(dir_archivo, nuevo_nombre)
+    # Ordenar determinísticamente
+    rutas_originales.sort()
+
+    # FASE 1: Renombrar a nombres temporales únicos (evita cualquier colisión)
+    print(f"--- Fase 1: Creando nombres temporales para {len(rutas_originales)} archivos ---")
+    archivos_temporales = []  # Lista de (ruta_temporal, extension)
+
+    for ruta in rutas_originales:
+        dir_padre = os.path.dirname(ruta)
+        _, ext = os.path.splitext(ruta)
+        
+        # Generar nombre temporal garantizado como único con UUID
+        nombre_temp = f"__tmp_collision_safe_{uuid.uuid4().hex}{ext}"
+        ruta_temp = os.path.join(dir_padre, nombre_temp)
         
         try:
-            os.rename(ruta_original, nueva_ruta)
-            print(f"✔ Renombrado: {os.path.basename(ruta_original)} → {nuevo_nombre}")
+            os.rename(ruta, ruta_temp)
+            archivos_temporales.append((ruta_temp, ext))
+            print(f"Temp: {os.path.basename(ruta)} -> {nombre_temp}")
         except Exception as e:
-            print(f"Error al renombrar {ruta_original}: {e}")
+            print(f"Error crítico en Fase 1 al procesar {ruta}: {e}")
 
-    print("Renombrado terminado 🚀")
+    # FASE 2: Renombrar de temporal a nombre final secuencial
+    print(f"\n--- Fase 2: Aplicando nombres finales ({prefijo}_NNN) ---")
+    
+    for i, (ruta_temp, ext) in enumerate(archivos_temporales):
+        dir_padre = os.path.dirname(ruta_temp)
+        # Formato final con índice de 3 dígitos (configurable a 2 si se desea)
+        nombre_final = f"{prefijo}_{i:03d}{ext}"
+        ruta_final = os.path.join(dir_padre, nombre_final)
+        
+        try:
+            os.rename(ruta_temp, ruta_final)
+            print(f"Final: {os.path.basename(ruta_temp)} -> {nombre_final}")
+        except Exception as e:
+            print(f"Error crítico en Fase 2 al procesar {ruta_temp}: {e}")
+
+    print("\nProceso de renombrado completado con éxito 🚀")
 
 
 def _main() -> None:
