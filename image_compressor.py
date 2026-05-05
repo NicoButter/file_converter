@@ -32,13 +32,14 @@ BORRAR_ORIGINAL: bool = False
 THREADS: int = 8
 
 
-def convertir_imagen(ruta_original: str, dir_origen: str, dir_destino: str) -> None:
+def convertir_imagen(ruta_original: str, dir_origen: str, dir_destino: str, nuevo_nombre_base: str = None) -> None:
     """Convierte una imagen a WebP si produce ahorro de espacio, copiándola al directorio destino.
 
     Parámetros:
         ruta_original: Ruta al archivo de imagen de entrada.
         dir_origen: Directorio raíz de origen para mantener la estructura de carpetas.
         dir_destino: Directorio raíz de destino donde se guardarán las imágenes.
+        nuevo_nombre_base: Opcional. Permite reemplazar el nombre del archivo de salida.
 
     Comportamiento:
         - Mantiene la estructura de carpetas del origen en el directorio destino.
@@ -52,7 +53,9 @@ def convertir_imagen(ruta_original: str, dir_origen: str, dir_destino: str) -> N
     ruta_destino_base = os.path.join(dir_destino, os.path.dirname(rel_path))
     os.makedirs(ruta_destino_base, exist_ok=True)
 
-    nombre_base, ext = os.path.splitext(os.path.basename(ruta_original))
+    nombre_base_orig, ext = os.path.splitext(os.path.basename(ruta_original))
+    nombre_base = nuevo_nombre_base if nuevo_nombre_base else nombre_base_orig
+    
     ruta_webp = os.path.join(ruta_destino_base, nombre_base + ".webp")
     ruta_destino_original = os.path.join(ruta_destino_base, nombre_base + ext)
 
@@ -137,11 +140,12 @@ def _main() -> None:
         print("\n--- MENÚ PRINCIPAL ---")
         print("1. Convertir imágenes a WebP")
         print("2. Renombrar archivos por lote")
-        print("3. Salir")
+        print("3. Convertir y renombrar imágenes a WebP")
+        print("4. Salir")
         
         opcion = input("Seleccione una opción: ")
 
-        if opcion in ["1", "2"]:
+        if opcion in ["1", "2", "3"]:
             usar_default = input("¿Usar la carpeta por defecto 'source'? (S/n): ").strip().lower()
             if usar_default == 'n':
                 dir_origen = input("Ingrese la ruta absoluta o relativa del directorio de imágenes: ").strip()
@@ -154,7 +158,7 @@ def _main() -> None:
                 dir_origen = directorio
                 dir_destino = directorio_destino
         
-        if opcion == "1":
+        if opcion in ["1", "3"]:
             imagenes = buscar_imagenes(dir_origen)
             print(f"Encontradas {len(imagenes)} imágenes en {dir_origen}")
             
@@ -169,14 +173,27 @@ def _main() -> None:
                     print(f"Error al crear directorio destino: {e}")
                     continue
             
-            funcion_convertir = partial(convertir_imagen, dir_origen=dir_origen, dir_destino=dir_destino)
+            prefijo = None
+            if opcion == "3":
+                prefijo = input("Ingrese el prefijo para los nuevos archivos (ej. foto_familiar): ").strip()
+                if not prefijo:
+                    print("Prefijo inválido. Volviendo al menú...")
+                    continue
+                imagenes.sort() # Importante para ordenar la numeración
             
             with ThreadPoolExecutor(max_workers=THREADS) as executor:
-                executor.map(funcion_convertir, imagenes)
+                if opcion == "3":
+                    for idx, ruta_orig in enumerate(imagenes):
+                        nuevo_nom = f"{prefijo}_{idx:02d}"
+                        executor.submit(convertir_imagen, ruta_orig, dir_origen, dir_destino, nuevo_nom)
+                else:
+                    for ruta_orig in imagenes:
+                        executor.submit(convertir_imagen, ruta_orig, dir_origen, dir_destino)
+
             print(f"Optimización terminada 🚀. Resultados en: {dir_destino}")
         elif opcion == "2":
             renombrar_archivos(dir_origen)
-        elif opcion == "3":
+        elif opcion == "4":
             print("Saliendo del programa...")
             break
         else:
