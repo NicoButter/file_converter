@@ -88,19 +88,62 @@ def buscar_imagenes(directorio: str) -> List[str]:
     return archivos
 
 
+def renombrar_archivos(directorio: str) -> None:
+    """Renombra todas las imágenes en el directorio secuencialmente con un prefijo."""
+    prefijo = input("Ingrese el prefijo para los archivos (ej. foto_familiar): ")
+    if not prefijo:
+        print("Prefijo inválido.")
+        return
+
+    imagenes = buscar_imagenes(directorio)
+    if not imagenes:
+        print("No se encontraron imágenes para renombrar.")
+        return
+
+    imagenes.sort()
+    for idx, ruta_original in enumerate(imagenes):
+        dir_archivo = os.path.dirname(ruta_original)
+        _, ext = os.path.splitext(ruta_original)
+        nuevo_nombre = f"{prefijo}_{idx:02d}{ext}"
+        nueva_ruta = os.path.join(dir_archivo, nuevo_nombre)
+        
+        try:
+            os.rename(ruta_original, nueva_ruta)
+            print(f"✔ Renombrado: {os.path.basename(ruta_original)} → {nuevo_nombre}")
+        except Exception as e:
+            print(f"Error al renombrar {ruta_original}: {e}")
+
+    print("Renombrado terminado 🚀")
+
+
 def _main() -> None:
     """Punto de entrada principal para ejecución como script."""
 
     directorio = "imagenes"  # carpeta base
+    if not os.path.exists(directorio):
+        os.makedirs(directorio)
 
-    imagenes = buscar_imagenes(directorio)
-
-    print(f"Encontradas {len(imagenes)} imágenes")
-
-    with ThreadPoolExecutor(max_workers=THREADS) as executor:
-        executor.map(convertir_imagen, imagenes)
-
-    print("Optimización terminada 🚀")
+    while True:
+        print("\n--- MENÚ PRINCIPAL ---")
+        print("1. Convertir imágenes a WebP")
+        print("2. Renombrar archivos por lote")
+        print("3. Salir")
+        
+        opcion = input("Seleccione una opción: ")
+        
+        if opcion == "1":
+            imagenes = buscar_imagenes(directorio)
+            print(f"Encontradas {len(imagenes)} imágenes")
+            with ThreadPoolExecutor(max_workers=THREADS) as executor:
+                executor.map(convertir_imagen, imagenes)
+            print("Optimización terminada 🚀")
+        elif opcion == "2":
+            renombrar_archivos(directorio)
+        elif opcion == "3":
+            print("Saliendo del programa...")
+            break
+        else:
+            print("Opción no válida, por favor intente de nuevo.")
 
 
 if __name__ == "__main__":
