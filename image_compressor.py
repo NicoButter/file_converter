@@ -26,7 +26,7 @@ from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 
 # --- Configuración ---
-EXTENSIONES: Tuple[str, ...] = (".jpg", ".jpeg", ".png")
+EXTENSIONES: Tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp")
 CALIDAD: int = 80
 BORRAR_ORIGINAL: bool = False
 THREADS: int = 8
@@ -98,19 +98,23 @@ def buscar_imagenes(directorio: str) -> List[str]:
 
 
 def renombrar_archivos(directorio: str) -> None:
-    """Renombra todas las imágenes en el directorio secuencialmente con un prefijo."""
+    """Renombra todos los archivos en el directorio secuencialmente con un prefijo."""
     prefijo = input("Ingrese el prefijo para los archivos (ej. foto_familiar): ")
     if not prefijo:
         print("Prefijo inválido.")
         return
 
-    imagenes = buscar_imagenes(directorio)
-    if not imagenes:
-        print("No se encontraron imágenes para renombrar.")
+    archivos = []
+    for root, _, files in os.walk(directorio):
+        for f in files:
+            archivos.append(os.path.join(root, f))
+    
+    if not archivos:
+        print("No se encontraron archivos para renombrar.")
         return
 
-    imagenes.sort()
-    for idx, ruta_original in enumerate(imagenes):
+    archivos.sort()
+    for idx, ruta_original in enumerate(archivos):
         dir_archivo = os.path.dirname(ruta_original)
         _, ext = os.path.splitext(ruta_original)
         nuevo_nombre = f"{prefijo}_{idx:02d}{ext}"
