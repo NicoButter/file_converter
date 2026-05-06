@@ -1,5 +1,6 @@
 # Image Compressor
 
+![Version](https://img.shields.io/badge/Version-1.2-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)
@@ -213,5 +214,5 @@ Este proyecto se distribuye bajo la licencia MIT. Consulte el archivo [LICENSE](
 **Nicolas Butterfield**
 
 - 📧 Email: nicobutter@gmail.com
-- 📦 Versión: 1.0.0
+- 📦 Versión: 1.2
 - 📅 Última actualización: 2026
