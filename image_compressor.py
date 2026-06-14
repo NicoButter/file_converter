@@ -105,6 +105,45 @@ def convertir_imagen(ruta_original: str, dir_origen: str, dir_destino: str, nuev
         print(f"Error con {ruta_original}: {e}")
 
 
+def convertir_png_a_jpg(ruta_original: str, dir_origen: str, dir_destino: str, nuevo_nombre_base: str = None) -> None:
+    """Convierte una imagen PNG a JPEG, manejando la transparencia si es necesario.
+
+    Parámetros:
+        ruta_original: Ruta al archivo PNG de entrada.
+        dir_origen: Directorio raíz de origen para mantener la estructura de carpetas.
+        dir_destino: Directorio raíz de destino.
+        nuevo_nombre_base: Opcional. Permite reemplazar el nombre del archivo de salida.
+    """
+    rel_path = os.path.relpath(ruta_original, dir_origen)
+    ruta_destino_base = os.path.join(dir_destino, os.path.dirname(rel_path))
+    os.makedirs(ruta_destino_base, exist_ok=True)
+
+    nombre_base_orig, _ = os.path.splitext(os.path.basename(ruta_original))
+    nombre_base = nuevo_nombre_base if nuevo_nombre_base else nombre_base_orig
+    
+    ruta_jpg = os.path.join(ruta_destino_base, nombre_base + ".jpg")
+
+    try:
+        with Image.open(ruta_original) as img:
+            # JPEG no soporta canal Alpha, convertir a RGB si es necesario
+            if img.mode in ("RGBA", "P", "LA") or (img.mode == "RGB" and "transparency" in img.info):
+                # Crear fondo blanco para las partes transparentes
+                fondo = Image.new("RGB", img.size, (255, 255, 255))
+                if img.mode == "RGBA":
+                    fondo.paste(img, mask=img.split()[3]) # 3 es el canal alpha
+                else:
+                    fondo.paste(img.convert("RGBA"), mask=img.convert("RGBA").split()[3])
+                img = fondo
+            elif img.mode != "RGB":
+                img = img.convert("RGB")
+                
+            img.save(ruta_jpg, "JPEG", quality=CALIDAD, optimize=True)
+            print(f"✔ {ruta_original} → {ruta_jpg}")
+
+    except Exception as e:
+        print(f"Error al convertir {ruta_original} a JPEG: {e}")
+
+
 def buscar_imagenes(directorio: str) -> List[str]:
     """Busca imágenes dentro de `directorio` y devuelve rutas completas.
 
@@ -205,11 +244,12 @@ def _main() -> None:
         print("1. Convertir imágenes a WebP")
         print("2. Renombrar archivos por lote")
         print("3. Convertir y renombrar imágenes a WebP")
-        print("4. Salir")
+        print("4. Convertir PNG a JPEG")
+        print("5. Salir")
         
         opcion = input("Seleccione una opción: ")
 
-        if opcion in ["1", "2", "3"]:
+        if opcion in ["1", "2", "3", "4"]:
             usar_default = input("¿Usar la carpeta por defecto 'source'? (S/n): ").strip().lower()
             if usar_default == 'n':
                 dir_origen = input("Ingrese la ruta absoluta o relativa del directorio de imágenes: ").strip()
@@ -222,8 +262,13 @@ def _main() -> None:
                 dir_origen = directorio
                 dir_destino = directorio_destino
         
-        if opcion in ["1", "3"]:
-            imagenes = buscar_imagenes(dir_origen)
+        if opcion in ["1", "3", "4"]:
+            if opcion == "4":
+                # Solo buscamos PNGs para esta opción
+                imagenes = [f for f in buscar_imagenes(dir_origen) if f.lower().endswith('.png')]
+            else:
+                imagenes = buscar_imagenes(dir_origen)
+                
             print(f"Encontradas {len(imagenes)} imágenes en {dir_origen}")
             
             # Crear directorio destino si no existe
@@ -250,14 +295,17 @@ def _main() -> None:
                     for idx, ruta_orig in enumerate(imagenes):
                         nuevo_nom = f"{prefijo}_{idx:02d}"
                         executor.submit(convertir_imagen, ruta_orig, dir_origen, dir_destino, nuevo_nom)
+                elif opcion == "4":
+                    for ruta_orig in imagenes:
+                        executor.submit(convertir_png_a_jpg, ruta_orig, dir_origen, dir_destino)
                 else:
                     for ruta_orig in imagenes:
                         executor.submit(convertir_imagen, ruta_orig, dir_origen, dir_destino)
 
-            print(f"Optimización terminada 🚀. Resultados en: {dir_destino}")
+            print(f"Proceso terminado 🚀. Resultados en: {dir_destino}")
         elif opcion == "2":
             renombrar_archivos(dir_origen)
-        elif opcion == "4":
+        elif opcion == "5":
             print("Saliendo del programa...")
             break
         else:

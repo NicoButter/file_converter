@@ -116,7 +116,8 @@ El script incluye un menú interactivo con las siguientes opciones:
 1. **Convertir imágenes a WebP**: Escanea la carpeta de origen y optimiza las imágenes.
 2. **Renombrar archivos por lote**: Renombrado masivo y recursivo con sistema anti-colisiones.
 3. **Convertir y renombrar**: Ejecuta ambas tareas secuencialmente.
-4. **Salir**.
+4. **Convertir PNG a JPEG**: Convierte específicamente archivos PNG a formato JPEG (ideal para compatibilidad).
+5. **Salir**.
 
 ---
 
