@@ -53,6 +53,21 @@ def log(msg: str) -> None:
         print(msg)
 
 
+def mostrar_creditos() -> None:
+    """Muestra la información del producto al finalizar la aplicación."""
+
+    print(
+        "\n" + "=" * 58
+        + "\n  Image Converter — Producto de Vetrabyte"
+        + "\n  Desarrollado por: Nicolás Butterfield"
+        + "\n  Contacto: nicobutter@gmail.com"
+        + "\n  Web: https://vetrabyte.com.ar"
+        + "\n  Uso libre para quienes lo necesiten (licencia MIT)."
+        + "\n  ¡Gracias por utilizar la herramienta!"
+        + "\n" + "=" * 58
+    )
+
+
 # --- Configuración ---
 EXTENSIONES: Tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp")
 CALIDAD: int = 80
@@ -312,6 +327,7 @@ def _main() -> None:
             run_metadata_audit(dir_origen, dir_destino)
         elif opcion == "6":
             print("Saliendo del programa...")
+            mostrar_creditos()
             break
         else:
             print("Opción no válida, por favor intente de nuevo.")
