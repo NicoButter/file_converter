@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from PIL import Image
 
-from metadata.cli import _image_path_from_directory
+from metadata.cli import _find_images, _processed_output_path
 from metadata.models import RiskLevel, SanitizationMode
 from metadata.sanitizer import MetadataSanitizer, safe_output_path
 from metadata.scanner import MetadataScanner
@@ -22,19 +22,32 @@ class Completed:
 
 
 class MetadataCliTests(unittest.TestCase):
-    def test_relative_image_path_uses_selected_directory(self):
-        selected = Path("source")
-        self.assertEqual(
-            _image_path_from_directory("sample.jpg", selected),
-            selected / "sample.jpg",
-        )
+    def test_find_images_uses_selected_directory_recursively(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            selected = Path(temp_dir)
+            nested = selected / "nested"
+            nested.mkdir()
+            first = selected / "first.jpg"
+            second = nested / "second.PNG"
+            ignored = selected / "ignored.gif"
+            first.touch()
+            second.touch()
+            ignored.touch()
 
-    def test_absolute_image_path_is_preserved(self):
-        absolute = Path("/tmp/sample.jpg")
-        self.assertEqual(
-            _image_path_from_directory(str(absolute), Path("source")),
-            absolute,
-        )
+            self.assertEqual(_find_images(selected), [first, second])
+
+    def test_processed_image_is_written_to_output(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "source"
+            image = source / "nested" / "sample.jpg"
+            image.parent.mkdir(parents=True)
+            image.touch()
+
+            self.assertEqual(
+                _processed_output_path(image, source, root / "output"),
+                root / "output" / "nested" / "sample_sanitizada.jpg",
+            )
 
 
 class MetadataScannerTests(unittest.TestCase):

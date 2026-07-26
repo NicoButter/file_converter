@@ -75,9 +75,11 @@ puede indicar otro directorio; en ese caso los resultados se escriben en
 ### Auditoría de metadatos
 
 En la opción 5 se ofrece `source/` como directorio predeterminado, igual que
-en las operaciones por lotes. Se puede indicar otro directorio y luego se
-solicita una imagen JPEG, PNG o WebP dentro de la carpeta elegida. El resultado
-incluye:
+en las operaciones por lotes. Se puede indicar otro directorio; la auditoría
+procesa directamente todas las imágenes JPEG, PNG o WebP encontradas en la
+carpeta elegida y sus subcarpetas. Las imágenes sanitizadas y los reportes se
+guardan en `output/` por defecto; para otro origen se usa su subcarpeta
+`output_convertidas/`. El resultado incluye:
 
 - archivo, formato, dimensiones y tamaño;
 - cantidad total y resumen por categoría/riesgo;
@@ -97,8 +99,9 @@ para bajo y gris para informativo/calculado.
 | Total | Elimina todos los metadatos posibles. Quitar ICC puede cambiar ligeramente el color. |
 | Personalizada | El usuario selecciona etiquetas incrustadas por su índice. |
 
-La salida se guarda junto al original como `nombre_sanitizada.ext`. Si ese
-archivo existe se usa `nombre_sanitizada_2.ext`, y así sucesivamente. Nunca se
+La salida se guarda en el directorio de destino como
+`nombre_sanitizada.ext`, conservando las subcarpetas del origen. Si ese archivo
+existe se usa `nombre_sanitizada_2.ext`, y así sucesivamente. Nunca se
 sobrescribe el original ni una salida existente.
 
 Después de limpiar se vuelve a escanear la copia y se informa:

@@ -309,7 +309,7 @@ def _main() -> None:
         elif opcion == "5":
             from metadata.cli import run_metadata_audit
 
-            run_metadata_audit(dir_origen)
+            run_metadata_audit(dir_origen, dir_destino)
         elif opcion == "6":
             print("Saliendo del programa...")
             break

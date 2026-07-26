@@ -8,8 +8,8 @@ from typing import Dict, List, Optional, Sequence
 
 from .models import MetadataEntry, RiskLevel, SanitizationMode, ScanResult
 from .reports import export_report_json, export_report_text, report_as_text
-from .sanitizer import MetadataSanitizer
-from .scanner import MetadataError, MetadataScanner
+from .sanitizer import MetadataSanitizer, safe_output_path
+from .scanner import MetadataError, MetadataScanner, SUPPORTED_EXTENSIONS
 
 COLORS: Dict[RiskLevel, str] = {
     RiskLevel.HIGH: "\033[31m",
@@ -129,29 +129,71 @@ def _choose_mode() -> Optional[SanitizationMode]:
     return choices.get(input("Seleccione una opción: ").strip())
 
 
-def _image_path_from_directory(raw_path: str, directory: Path) -> Path:
-    """Resuelve una imagen relativa a la carpeta elegida por el usuario."""
+def _find_images(directory: Path) -> List[Path]:
+    """Devuelve las imágenes compatibles de un directorio, recursivamente."""
 
-    image_path = Path(raw_path).expanduser()
-    if image_path.is_absolute():
-        return image_path
-    return Path(directory).expanduser() / image_path
+    base_directory = directory.expanduser()
+    return sorted(
+        (
+            path
+            for path in base_directory.rglob("*")
+            if path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS
+        ),
+        key=lambda path: str(path).lower(),
+    )
 
 
-def run_metadata_audit(directory: Path | str = "source") -> None:
+def _processed_output_path(
+    image_path: Path, source_directory: Path, output_directory: Path
+) -> Path:
+    """Construye una salida segura, conservando subcarpetas del origen."""
+
+    relative_path = image_path.resolve().relative_to(
+        source_directory.expanduser().resolve()
+    )
+    destination = output_directory.expanduser() / relative_path
+    return safe_output_path(destination)
+
+
+def run_metadata_audit(
+    directory: Path | str = "source",
+    output_directory: Path | str = "output",
+) -> None:
     base_directory = Path(directory)
-    raw_path = input(
-        "Nombre o ruta relativa de la imagen dentro de '{}': ".format(
-            base_directory
+    destination_directory = Path(output_directory)
+    images = _find_images(base_directory)
+    if not images:
+        print(
+            "No se encontraron imágenes JPEG, PNG o WebP en '{}'.".format(
+                base_directory
+            )
         )
-    ).strip()
-    if not raw_path:
-        print("No se indicó una imagen.")
         return
 
+    print(
+        "Se auditarán {} imagen(es) de '{}'. Las imágenes procesadas se "
+        "guardarán en '{}'.".format(
+            len(images), base_directory, destination_directory
+        )
+    )
     scanner = MetadataScanner()
+    for index, image_path in enumerate(images, 1):
+        print(
+            "\n--- Imagen {}/{}: {} ---".format(
+                index, len(images), image_path
+            )
+        )
+        output_path = _processed_output_path(
+            image_path, base_directory, destination_directory
+        )
+        _audit_image(image_path, output_path, scanner)
+
+
+def _audit_image(
+    image_path: Path, output_path: Path, scanner: MetadataScanner
+) -> None:
     try:
-        scan = scanner.scan(_image_path_from_directory(raw_path, base_directory))
+        scan = scanner.scan(image_path)
         show_scan(scan)
         mode = _choose_mode()
         if mode is None:
@@ -166,7 +208,11 @@ def run_metadata_audit(directory: Path | str = "source") -> None:
                 return
 
         result = MetadataSanitizer(scanner).sanitize(
-            scan.path, mode, selected_entries=selected, before=scan
+            scan.path,
+            mode,
+            selected_entries=selected,
+            output_path=output_path,
+            before=scan,
         )
         if mode == SanitizationMode.NONE:
             print("No se modificó ni creó ningún archivo.")
@@ -175,7 +221,7 @@ def run_metadata_audit(directory: Path | str = "source") -> None:
             ).strip().lower()
             if export_choice in {"j", "t"}:
                 suffix = ".json" if export_choice == "j" else ".txt"
-                report_path = scan.path.with_name(
+                report_path = output_path.with_name(
                     scan.path.stem + "_auditoria" + suffix
                 )
                 if report_path.exists():
