@@ -1,219 +1,171 @@
 # Image Compressor
 
-![Version](https://img.shields.io/badge/Version-1.2-orange.svg)
+![Version](https://img.shields.io/badge/Version-2.0-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)
 
-**Solución de optimización de imágenes con procesamiento paralelo**
+Herramienta de línea de comandos para convertir, comprimir y renombrar imágenes,
+con auditoría y sanitización verificable de metadatos.
 
-Herramienta escalable para la conversión y compresión de imágenes (JPG, JPEG, PNG) al formato WebP, implementada en Python con soporte para procesamiento multi-hilo eficiente.
+## Funcionalidades
 
----
+- Conversión de JPEG y PNG a WebP con comparación de tamaño.
+- Conversión de PNG a JPEG.
+- Renombrado recursivo en dos fases para evitar colisiones.
+- Procesamiento por lotes con `ThreadPoolExecutor`.
+- Auditoría de EXIF, XMP, IPTC, ICC, GPS, JUMBF/C2PA y otros bloques mediante
+  ExifTool.
+- Clasificación de cada etiqueta por categoría y riesgo.
+- Limpieza sensible, recomendada, total o personalizada.
+- Copias sanitizadas no destructivas y nombres incrementales seguros.
+- Comparación antes/después, verificación del original y reportes JSON o texto.
+- Fallback limitado con Pillow cuando ExifTool no está disponible.
 
-## Contenidos
-
-- [Descripción](#descripción)
-- [Características](#características)
-- [Requisitos](#requisitos)
-- [Instalación](#instalación)
-- [Uso](#uso)
-- [Configuración](#configuración)
-- [Rendimiento](#rendimiento)
-- [Ejemplos](#ejemplos)
-- [Autor](#autor)
-
----
-
-## Descripción
-
-Image Compressor es una utilidad de línea de comandos diseñada para optimizar colecciones de imágenes mediante la conversión al formato WebP, que proporciona mejor compresión en comparación con formatos tradicionales. La herramienta implementa procesamiento paralelo mediante `ThreadPoolExecutor` para maximizar el rendimiento en sistemas multi-núcleo.
-
----
-
-## Características
-
-- **Conversión inteligente**: Convierte imágenes (JPG, JPEG, PNG) a formato WebP con mejor ratio de compresión
-- **Renombrado Seguro (2 Fases)**: Sistema de renombrado por lotes que utiliza nombres temporales (UUID) para evitar colisiones accidentales.
-- **Procesamiento paralelo**: Implementación multi-hilo para optimizar tiempos de procesamiento
-- **Interfaz Visual**: Soporte opcional para barras de progreso mediante `tqdm` para una mejor experiencia de usuario.
-- **Validación comparativa**: Compara tamaños de archivo y preserva la versión original si no hay mejora
-- **Recorrido recursivo**: Procesa automáticamente subdirectorios
-- **Altamente configurable**: Control fino sobre calidad, retención de originales y concurrencia
-
----
+La presencia de XMP, JUMBF o C2PA se presenta como información de procedencia:
+no se interpreta por sí sola como prueba de generación mediante IA.
 
 ## Requisitos
 
-- **Python**: 3.8 o superior
-- **Sistema Operativo**: Linux, macOS, Windows
-- **Espacio en disco**: Suficiente para almacenar archivos convertidos (recomendado duplicar espacio de originales)
-- **Dependencias**:
-  - `Pillow` (PIL) - Requerido para la conversión de imágenes.
-  - `tqdm` - Opcional para barras de progreso (el script funciona sin ella).
+- Python 3.8 o posterior.
+- [Pillow](https://python-pillow.org/).
+- ExifTool, recomendado para el análisis y necesario para una sanitización
+  completa sin perder bloques no reconocidos por Pillow.
+- `tqdm`, opcional, para barras de progreso.
 
----
+Instalación de ExifTool:
+
+```bash
+# Debian/Ubuntu
+sudo apt install libimage-exiftool-perl
+
+# macOS con Homebrew
+brew install exiftool
+
+# Windows con winget
+winget install OliverBetz.ExifTool
+```
 
 ## Instalación
 
-### 1. Clonar o descargar el proyecto
-
 ```bash
-cd /ruta/del/proyecto
-```
-
-### 2. Crear y activar entorno virtual
-
-```bash
-# Crear entorno virtual
 python -m venv venv
-
-# Activar entorno (Linux/macOS)
-source venv/bin/activate
-
-# Activar entorno (Windows)
-venv\Scripts\activate
+source venv/bin/activate       # Windows: venv\Scripts\activate
+python -m pip install -r requirements.txt
 ```
-
-### 3. Instalar dependencias
-
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
----
 
 ## Uso
-
-### Instrucción básica
 
 ```bash
 python image_compressor.py
 ```
 
-El script buscará automáticamente todas las imágenes en la carpeta `imagenes/` y sus subdirectorios, procediendo con la conversión según la configuración establecida.
+El menú ofrece:
 
-### Estructura de directorios
+1. Convertir imágenes a WebP.
+2. Renombrar archivos por lote.
+3. Convertir y renombrar imágenes a WebP.
+4. Convertir PNG a JPEG.
+5. Auditar y sanitizar metadatos.
+6. Salir.
 
-```
-proyecto/
-├── image_compressor.py
-├── imagenes/              # Carpeta con imágenes a procesar
-│   ├── foto1.jpg
-│   ├── foto2.png
-│   └── subfolder/
-│       └── foto3.jpeg
-└── venv/
-```
+Las operaciones por lotes usan `source/` y `output/` por defecto. También se
+puede indicar otro directorio; en ese caso los resultados se escriben en
+`output_convertidas/`.
 
----
+### Auditoría de metadatos
 
-## Menú de Opciones
+En la opción 5 se solicita una imagen JPEG, PNG o WebP. El resultado incluye:
 
-El script incluye un menú interactivo con las siguientes opciones:
+- archivo, formato, dimensiones y tamaño;
+- cantidad total y resumen por categoría/riesgo;
+- grupo, nombre técnico, nombre legible y valor de cada etiqueta;
+- distinción entre datos incrustados y valores calculados por ExifTool.
 
-1. **Convertir imágenes a WebP**: Escanea la carpeta de origen y optimiza las imágenes.
-2. **Renombrar archivos por lote**: Renombrado masivo y recursivo con sistema anti-colisiones.
-3. **Convertir y renombrar**: Ejecuta ambas tareas secuencialmente.
-4. **Convertir PNG a JPEG**: Convierte específicamente archivos PNG a formato JPEG (ideal para compatibilidad).
-5. **Salir**.
+Los niveles se muestran con colores: rojo para alto, amarillo para medio, azul
+para bajo y gris para informativo/calculado.
 
----
+### Modos de sanitización
 
-## Renombrado Seguro
+| Modo | Comportamiento |
+|---|---|
+| No modificar | Sólo analiza; permite exportar la auditoría. |
+| Datos sensibles | Elimina GPS, ubicación, propietario, autor, seriales y comentarios privados. |
+| Recomendada | También elimina fechas, software, historial, XMP, IPTC y procedencia; conserva ICC y orientación. |
+| Total | Elimina todos los metadatos posibles. Quitar ICC puede cambiar ligeramente el color. |
+| Personalizada | El usuario selecciona etiquetas incrustadas por su índice. |
 
-El sistema de renombrado utiliza una **estrategia de dos fases**:
-1. **Fase 1**: Todos los archivos se renombran a un identificador único temporal (UUID). Esto libera los nombres originales y evita conflictos si el nombre final ya existe.
-2. **Fase 2**: Los archivos temporales se renombran al formato final: `{prefijo}_{index:03d}{extension}`.
+La salida se guarda junto al original como `nombre_sanitizada.ext`. Si ese
+archivo existe se usa `nombre_sanitizada_2.ext`, y así sucesivamente. Nunca se
+sobrescribe el original ni una salida existente.
 
----
+Después de limpiar se vuelve a escanear la copia y se informa:
 
-## Configuración
+- cantidades anterior y posterior;
+- etiquetas eliminadas y conservadas;
+- ausencia de GPS/datos sensibles cuando corresponde;
+- conservación de ICC en el modo recomendado;
+- dimensiones y orientación visual;
+- integridad del archivo original.
 
-Edite el archivo `image_compressor.py` para ajustar los siguientes parámetros:
+El reporte se puede exportar como JSON o texto. La especificación técnica,
+limitaciones del fallback y ejemplos de API están en
+[`docs/metadata.md`](docs/metadata.md).
 
-| Parámetro | Tipo | Rango | Descripción | Recomendación |
-|-----------|------|-------|-------------|----------------|
-| `EXTENSIONES` | tuple | N/A | Formatos de entrada a procesar | `('jpg', 'jpeg', 'png')` |
-| `CALIDAD` | int | 1-95 | Nivel de compresión WebP | 80 (balance óptimo) |
-| `BORRAR_ORIGINAL` | bool | True/False | Eliminar archivo original después de convertir | False (primera ejecución) |
-| `THREADS` | int | 1-32 | Número de threads paralelos | CPU count (ej: 8 en i7) |
-
-### Ejemplo de configuración
+## API de metadatos
 
 ```python
-EXTENSIONES = ('jpg', 'jpeg', 'png')
-CALIDAD = 80           # Mayor = mejor calidad, mayor tamaño
-BORRAR_ORIGINAL = False  # Conservar originales
-THREADS = 8            # Ajustar según núcleos disponibles
+from pathlib import Path
+from metadata import MetadataScanner, MetadataSanitizer, SanitizationMode
+
+image = Path("foto.jpg")
+scanner = MetadataScanner()
+before = scanner.scan(image)
+
+result = MetadataSanitizer(scanner).sanitize(
+    image,
+    SanitizationMode.RECOMMENDED,
+    before=before,
+)
+
+print(result.output_path)
+print(result.report.verification)
 ```
 
----
+## Configuración de conversión
 
-## Rendimiento
+Los valores principales están al comienzo de `image_compressor.py`:
 
-### Benchmarks estimados
+| Parámetro | Valor inicial | Descripción |
+|---|---:|---|
+| `EXTENSIONES` | JPEG, PNG y WebP | Formatos buscados recursivamente. |
+| `CALIDAD` | `80` | Calidad de salida WebP/JPEG. |
+| `BORRAR_ORIGINAL` | `False` | Reservado para control de conservación. |
+| `THREADS` | `8` | Cantidad de tareas concurrentes. |
 
-- **Velocidad**: ~50-200 imágenes/minuto (depende de resolución y threads)
-- **Ratio de compresión**: Típicamente 30-50% de reducción de tamaño vs. PNG/JPG original
-- **Memoria**: <500 MB para lotes de 1000+ imágenes con threading
-- **Escalabilidad**: Lineal hasta el número de núcleos del procesador
+## Pruebas
 
-### Recomendaciones de optimización
-
-- Ajustar `THREADS` al número de núcleos disponibles
-- Usar `CALIDAD=70-75` para mayor compresión en imágenes no profesionales
-- Usar `CALIDAD=85-90` para fotografía de alta fidelidad
-
----
-
-## Autor
-
-**Nicolas Butterfield**
-- GitHub: [@nicobutter](https://github.com/nicobutter)
-- Email: nicobutter@gmail.com
-
----
-
-## Ejemplos
-
-### Salida estándar
-
-```
-═══════════════════════════════════════════════════════════════
-Encontradas 15 imágenes en la carpeta
-───────────────────────────────────────────────────────────────
-
-✔ imagenes/foto1.jpg 
-  → imagenes/foto1.webp 
-  Reducción: 2.5 MB → 1.2 MB (52% menor)
-
-✔ imagenes/subfolder/foto2.png 
-  → imagenes/subfolder/foto2.webp 
-  Reducción: 3.0 MB → 1.4 MB (53% menor)
-
-✘ imagenes/pequena.jpg 
-  Omitida: WebP no proporciona mejora de compresión
-
-───────────────────────────────────────────────────────────────
-Optimización completada exitosamente
-Procesadas: 14 imágenes | Omitidas: 1 | Tiempo: 24.3s
-═══════════════════════════════════════════════════════════════
+```bash
+python -m unittest discover -v
 ```
 
----
+Las pruebas incluyen imágenes con GPS, sin metadatos, con EXIF+XMP, creación de
+copias mediante Pillow e incremento seguro del nombre de salida.
 
-## Licencia
+## Estructura
 
-Este proyecto se distribuye bajo la licencia MIT. Consulte el archivo [LICENSE](LICENSE) para más detalles.
+```text
+metadata/
+├── classifier.py   # categorías, riesgo y nombres legibles
+├── cli.py          # flujo interactivo
+├── models.py       # entidades y resultados
+├── reports.py      # comparación, verificación y exportación
+├── sanitizer.py    # limpieza ExifTool/Pillow
+└── scanner.py      # lectura ExifTool/Pillow
+tests/
+└── test_metadata.py
+```
 
----
+## Licencia y autor
 
-## Autor
-
-**Nicolas Butterfield**
-
-- 📧 Email: nicobutter@gmail.com
-- 📦 Versión: 1.2
-- 📅 Última actualización: 2026
+Distribuido bajo la licencia MIT. Autor original: Nicolas Butterfield
+([@nicobutter](https://github.com/nicobutter)).

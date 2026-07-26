@@ -245,7 +245,8 @@ def _main() -> None:
         print("2. Renombrar archivos por lote")
         print("3. Convertir y renombrar imágenes a WebP")
         print("4. Convertir PNG a JPEG")
-        print("5. Salir")
+        print("5. Auditar y sanitizar metadatos")
+        print("6. Salir")
         
         opcion = input("Seleccione una opción: ")
 
@@ -306,6 +307,10 @@ def _main() -> None:
         elif opcion == "2":
             renombrar_archivos(dir_origen)
         elif opcion == "5":
+            from metadata.cli import run_metadata_audit
+
+            run_metadata_audit()
+        elif opcion == "6":
             print("Saliendo del programa...")
             break
         else:

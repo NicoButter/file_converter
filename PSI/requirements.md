@@ -23,3 +23,19 @@ Este documento detalla los requerimientos de usuario para la herramienta de conv
 ## 4. Requerimientos Técnicos
 - El sistema se basa en script nativo compilado en versiones Python >= 3.8.
 - Gestión de píxeles a través de la SDK del framework `Pillow`.
+
+## 5. Auditoría de Metadatos
+- **REQ-META-01**: El usuario debe poder seleccionar una imagen JPEG, PNG o WebP y analizar sus metadatos con ExifTool.
+- **REQ-META-02**: El sistema debe agrupar y ordenar las etiquetas, distinguir datos incrustados de información calculada y clasificarlas con riesgo alto, medio, bajo o informativo.
+- **REQ-META-03**: El análisis debe incluir EXIF, XMP, IPTC, ICC, GPS, autoría, software, fechas, cámara, seriales y bloques de procedencia JUMBF/C2PA cuando existan.
+- **REQ-META-04**: XMP, JUMBF o C2PA deben mostrarse como procedencia, sin afirmar por su sola presencia que una imagen fue creada mediante IA.
+- **REQ-META-05**: Si ExifTool no está instalado, el sistema debe continuar con un fallback limitado de Pillow y mostrar una instrucción de instalación.
+
+## 6. Sanitización y Verificación
+- **REQ-SAN-01**: El usuario debe poder elegir entre no modificar, eliminar datos sensibles, limpieza recomendada, limpieza total y selección personalizada.
+- **REQ-SAN-02**: Toda limpieza debe crear una copia con nombre seguro incremental y nunca sobrescribir el original.
+- **REQ-SAN-03**: La limpieza recomendada debe conservar ICC y la orientación visual.
+- **REQ-SAN-04**: Antes de eliminar Orientation mediante reexportación, el sistema debe aplicar la transposición EXIF.
+- **REQ-SAN-05**: Después de limpiar, el sistema debe volver a analizar la copia y comparar etiquetas eliminadas y conservadas.
+- **REQ-SAN-06**: La verificación debe comprobar datos sensibles, ICC cuando corresponda, dimensiones, orientación e integridad SHA-256 del original.
+- **REQ-SAN-07**: El usuario debe poder exportar el reporte de auditoría o sanitización como JSON o texto.
