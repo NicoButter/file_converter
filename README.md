@@ -74,7 +74,10 @@ puede indicar otro directorio; en ese caso los resultados se escriben en
 
 ### Auditoría de metadatos
 
-En la opción 5 se solicita una imagen JPEG, PNG o WebP. El resultado incluye:
+En la opción 5 se ofrece `source/` como directorio predeterminado, igual que
+en las operaciones por lotes. Se puede indicar otro directorio y luego se
+solicita una imagen JPEG, PNG o WebP dentro de la carpeta elegida. El resultado
+incluye:
 
 - archivo, formato, dimensiones y tamaño;
 - cantidad total y resumen por categoría/riesgo;

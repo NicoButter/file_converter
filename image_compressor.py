@@ -250,7 +250,7 @@ def _main() -> None:
         
         opcion = input("Seleccione una opción: ")
 
-        if opcion in ["1", "2", "3", "4"]:
+        if opcion in ["1", "2", "3", "4", "5"]:
             usar_default = input("¿Usar la carpeta por defecto 'source'? (S/n): ").strip().lower()
             if usar_default == 'n':
                 dir_origen = input("Ingrese la ruta absoluta o relativa del directorio de imágenes: ").strip()
@@ -309,7 +309,7 @@ def _main() -> None:
         elif opcion == "5":
             from metadata.cli import run_metadata_audit
 
-            run_metadata_audit()
+            run_metadata_audit(dir_origen)
         elif opcion == "6":
             print("Saliendo del programa...")
             break

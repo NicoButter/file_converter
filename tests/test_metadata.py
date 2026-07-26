@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from PIL import Image
 
+from metadata.cli import _image_path_from_directory
 from metadata.models import RiskLevel, SanitizationMode
 from metadata.sanitizer import MetadataSanitizer, safe_output_path
 from metadata.scanner import MetadataScanner
@@ -18,6 +19,22 @@ class Completed:
         self.stdout = json.dumps([payload])
         self.stderr = ""
         self.returncode = 0
+
+
+class MetadataCliTests(unittest.TestCase):
+    def test_relative_image_path_uses_selected_directory(self):
+        selected = Path("source")
+        self.assertEqual(
+            _image_path_from_directory("sample.jpg", selected),
+            selected / "sample.jpg",
+        )
+
+    def test_absolute_image_path_is_preserved(self):
+        absolute = Path("/tmp/sample.jpg")
+        self.assertEqual(
+            _image_path_from_directory(str(absolute), Path("source")),
+            absolute,
+        )
 
 
 class MetadataScannerTests(unittest.TestCase):

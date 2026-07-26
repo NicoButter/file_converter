@@ -129,15 +129,29 @@ def _choose_mode() -> Optional[SanitizationMode]:
     return choices.get(input("Seleccione una opción: ").strip())
 
 
-def run_metadata_audit() -> None:
-    raw_path = input("Ruta de la imagen a analizar: ").strip()
+def _image_path_from_directory(raw_path: str, directory: Path) -> Path:
+    """Resuelve una imagen relativa a la carpeta elegida por el usuario."""
+
+    image_path = Path(raw_path).expanduser()
+    if image_path.is_absolute():
+        return image_path
+    return Path(directory).expanduser() / image_path
+
+
+def run_metadata_audit(directory: Path | str = "source") -> None:
+    base_directory = Path(directory)
+    raw_path = input(
+        "Nombre o ruta relativa de la imagen dentro de '{}': ".format(
+            base_directory
+        )
+    ).strip()
     if not raw_path:
         print("No se indicó una imagen.")
         return
 
     scanner = MetadataScanner()
     try:
-        scan = scanner.scan(Path(raw_path))
+        scan = scanner.scan(_image_path_from_directory(raw_path, base_directory))
         show_scan(scan)
         mode = _choose_mode()
         if mode is None:
