@@ -20,12 +20,13 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 import uuid
 from collections import defaultdict
 from typing import List, Tuple, Dict, Iterable, TypeVar, Iterator
 from functools import partial
 from PIL import Image
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 
 T = TypeVar("T")
 
@@ -34,6 +35,24 @@ try:
     from tqdm import tqdm  # type: ignore
 except ImportError:
     tqdm = None
+
+
+USAR_COLORES = sys.stdout.isatty() and "NO_COLOR" not in os.environ
+RESET = "\033[0m"
+NEGRITA = "\033[1m"
+ROJO = "\033[31m"
+VERDE = "\033[32m"
+AMARILLO = "\033[33m"
+AZUL = "\033[34m"
+CIAN = "\033[36m"
+
+
+def colorear(texto: str, *estilos: str) -> str:
+    """Aplica estilos ANSI cuando la salida está conectada a una terminal."""
+
+    if not USAR_COLORES:
+        return texto
+    return "".join(estilos) + texto + RESET
 
 
 def iterar_con_progreso(iterable: Iterable[T], desc: str) -> Iterator[T]:
@@ -53,19 +72,46 @@ def log(msg: str) -> None:
         print(msg)
 
 
+def esperar_con_progreso(
+    futuros: Iterable[Future[None]], total: int, descripcion: str
+) -> None:
+    """Espera tareas concurrentes mostrando una barra o contador de progreso."""
+
+    completados = as_completed(futuros)
+    if tqdm:
+        for futuro in tqdm(
+            completados,
+            total=total,
+            desc=descripcion,
+            unit="imagen",
+            colour="cyan",
+        ):
+            futuro.result()
+        return
+
+    for indice, futuro in enumerate(completados, 1):
+        futuro.result()
+        print(
+            "\r{} {}/{}".format(descripcion, indice, total),
+            end="",
+            flush=True,
+        )
+    if total:
+        print()
+
+
 def mostrar_creditos() -> None:
     """Muestra la información del producto al finalizar la aplicación."""
 
-    print(
-        "\n" + "=" * 58
-        + "\n  Image Converter — Producto de Vetrabyte"
-        + "\n  Desarrollado por: Nicolás Butterfield"
-        + "\n  Contacto: nicobutter@gmail.com"
-        + "\n  Web: https://vetrabyte.com.ar"
-        + "\n  Uso libre para quienes lo necesiten (licencia MIT)."
-        + "\n  ¡Gracias por utilizar la herramienta!"
-        + "\n" + "=" * 58
-    )
+    borde = colorear("=" * 58, CIAN)
+    print("\n" + borde)
+    print(colorear("  Image Converter — Producto de Vetrabyte", AZUL, NEGRITA))
+    print(colorear("  Desarrollado por: Nicolás Butterfield", NEGRITA))
+    print(colorear("  Contacto: nicobutter@gmail.com", CIAN))
+    print(colorear("  Web: https://vetrabyte.com.ar", CIAN))
+    print(colorear("  Uso libre para quienes lo necesiten (licencia MIT).", VERDE))
+    print(colorear("  ¡Gracias por utilizar la herramienta!", AMARILLO))
+    print(borde)
 
 
 # --- Configuración ---
@@ -110,14 +156,26 @@ def convertir_imagen(ruta_original: str, dir_origen: str, dir_destino: str, nuev
         size_webp = os.path.getsize(ruta_webp)
 
         if size_webp < size_original:
-            print(f"✔ {ruta_original} → {ruta_webp} ({size_original} → {size_webp})")
+            log(
+                colorear(
+                    f"✔ {ruta_original} → {ruta_webp} "
+                    f"({size_original} → {size_webp})",
+                    VERDE,
+                )
+            )
         else:
             os.remove(ruta_webp)
             shutil.copy2(ruta_original, ruta_destino_original)
-            print(f"✘ {ruta_original} (webp no mejora, copiado original a destino)")
+            log(
+                colorear(
+                    f"ℹ {ruta_original} "
+                    "(WebP no mejora; se copió el original al destino)",
+                    AMARILLO,
+                )
+            )
 
     except Exception as e:  # pragma: no cover
-        print(f"Error con {ruta_original}: {e}")
+        log(colorear(f"Error con {ruta_original}: {e}", ROJO))
 
 
 def convertir_png_a_jpg(ruta_original: str, dir_origen: str, dir_destino: str, nuevo_nombre_base: str = None) -> None:
@@ -153,10 +211,10 @@ def convertir_png_a_jpg(ruta_original: str, dir_origen: str, dir_destino: str, n
                 img = img.convert("RGB")
                 
             img.save(ruta_jpg, "JPEG", quality=CALIDAD, optimize=True)
-            print(f"✔ {ruta_original} → {ruta_jpg}")
+            log(colorear(f"✔ {ruta_original} → {ruta_jpg}", VERDE))
 
     except Exception as e:
-        print(f"Error al convertir {ruta_original} a JPEG: {e}")
+        log(colorear(f"Error al convertir {ruta_original} a JPEG: {e}", ROJO))
 
 
 def buscar_imagenes(directorio: str) -> List[str]:
@@ -255,22 +313,34 @@ def _main() -> None:
         os.makedirs(directorio_destino)
 
     while True:
-        print("\n--- MENÚ PRINCIPAL ---")
-        print("1. Convertir imágenes a WebP")
-        print("2. Renombrar archivos por lote")
-        print("3. Convertir y renombrar imágenes a WebP")
-        print("4. Convertir PNG a JPEG")
-        print("5. Auditar y sanitizar metadatos")
-        print("6. Salir")
+        print(colorear("\n╔════════ MENÚ PRINCIPAL ════════╗", CIAN, NEGRITA))
+        print(colorear("  1.", AMARILLO, NEGRITA) + " Convertir imágenes a WebP")
+        print(colorear("  2.", AMARILLO, NEGRITA) + " Renombrar archivos por lote")
+        print(colorear("  3.", AMARILLO, NEGRITA) + " Convertir y renombrar a WebP")
+        print(colorear("  4.", AMARILLO, NEGRITA) + " Convertir PNG a JPEG")
+        print(colorear("  5.", AMARILLO, NEGRITA) + " Auditar y sanitizar metadatos")
+        print(colorear("  6.", ROJO, NEGRITA) + " Salir")
+        print(colorear("╚════════════════════════════════╝", CIAN, NEGRITA))
         
-        opcion = input("Seleccione una opción: ")
+        opcion = input(colorear("Seleccione una opción: ", AMARILLO, NEGRITA))
 
         if opcion in ["1", "2", "3", "4", "5"]:
-            usar_default = input("¿Usar la carpeta por defecto 'source'? (S/n): ").strip().lower()
+            usar_default = input(
+                colorear(
+                    "¿Usar la carpeta por defecto 'source'? (S/n): ",
+                    AMARILLO,
+                )
+            ).strip().lower()
             if usar_default == 'n':
                 dir_origen = input("Ingrese la ruta absoluta o relativa del directorio de imágenes: ").strip()
                 if not os.path.exists(dir_origen):
-                    print(f"El directorio '{dir_origen}' no existe. Volviendo al menú...")
+                    print(
+                        colorear(
+                            f"El directorio '{dir_origen}' no existe. "
+                            "Volviendo al menú...",
+                            ROJO,
+                        )
+                    )
                     continue
                 # El destino será una subcarpeta 'output_convertidas' dentro de la carpeta elegida
                 dir_destino = os.path.join(dir_origen, "output_convertidas")
@@ -285,40 +355,84 @@ def _main() -> None:
             else:
                 imagenes = buscar_imagenes(dir_origen)
                 
-            print(f"Encontradas {len(imagenes)} imágenes en {dir_origen}")
+            print(
+                colorear(
+                    f"Encontradas {len(imagenes)} imágenes en {dir_origen}",
+                    CIAN,
+                )
+            )
             
             # Crear directorio destino si no existe
             if not os.path.exists(dir_destino) and imagenes:
                 try:
                     os.makedirs(dir_destino)
                 except PermissionError:
-                    print("Error: No tienes permisos para crear carpetas en este directorio. Ejecuta con permisos de administrador o elige otro directorio.")
+                    print(
+                        colorear(
+                            "Error: No tienes permisos para crear carpetas en "
+                            "este directorio. Ejecuta con permisos de "
+                            "administrador o elige otro directorio.",
+                            ROJO,
+                        )
+                    )
                     continue
                 except Exception as e:
-                    print(f"Error al crear directorio destino: {e}")
+                    print(colorear(f"Error al crear directorio destino: {e}", ROJO))
                     continue
             
             prefijo = None
             if opcion == "3":
                 prefijo = input("Ingrese el prefijo para los nuevos archivos (ej. foto_familiar): ").strip()
                 if not prefijo:
-                    print("Prefijo inválido. Volviendo al menú...")
+                    print(colorear("Prefijo inválido. Volviendo al menú...", ROJO))
                     continue
                 imagenes.sort() # Importante para ordenar la numeración
             
             with ThreadPoolExecutor(max_workers=THREADS) as executor:
+                futuros: List[Future[None]] = []
                 if opcion == "3":
                     for idx, ruta_orig in enumerate(imagenes):
                         nuevo_nom = f"{prefijo}_{idx:02d}"
-                        executor.submit(convertir_imagen, ruta_orig, dir_origen, dir_destino, nuevo_nom)
+                        futuros.append(
+                            executor.submit(
+                                convertir_imagen,
+                                ruta_orig,
+                                dir_origen,
+                                dir_destino,
+                                nuevo_nom,
+                            )
+                        )
                 elif opcion == "4":
                     for ruta_orig in imagenes:
-                        executor.submit(convertir_png_a_jpg, ruta_orig, dir_origen, dir_destino)
+                        futuros.append(
+                            executor.submit(
+                                convertir_png_a_jpg,
+                                ruta_orig,
+                                dir_origen,
+                                dir_destino,
+                            )
+                        )
                 else:
                     for ruta_orig in imagenes:
-                        executor.submit(convertir_imagen, ruta_orig, dir_origen, dir_destino)
+                        futuros.append(
+                            executor.submit(
+                                convertir_imagen,
+                                ruta_orig,
+                                dir_origen,
+                                dir_destino,
+                            )
+                        )
+                esperar_con_progreso(
+                    futuros, len(futuros), "Procesando imágenes"
+                )
 
-            print(f"Proceso terminado 🚀. Resultados en: {dir_destino}")
+            print(
+                colorear(
+                    f"Proceso terminado 🚀. Resultados en: {dir_destino}",
+                    VERDE,
+                    NEGRITA,
+                )
+            )
         elif opcion == "2":
             renombrar_archivos(dir_origen)
         elif opcion == "5":
@@ -326,11 +440,16 @@ def _main() -> None:
 
             run_metadata_audit(dir_origen, dir_destino)
         elif opcion == "6":
-            print("Saliendo del programa...")
+            print(colorear("Saliendo del programa...", CIAN))
             mostrar_creditos()
             break
         else:
-            print("Opción no válida, por favor intente de nuevo.")
+            print(
+                colorear(
+                    "Opción no válida, por favor intente de nuevo.",
+                    ROJO,
+                )
+            )
 
 
 if __name__ == "__main__":

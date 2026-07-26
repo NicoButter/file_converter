@@ -28,6 +28,9 @@ Desarrollado por **Nicolás Butterfield**.
 - Comparar el tamaño del WebP generado y conservar en destino el original si
   la conversión no reduce el peso.
 - Procesar varios archivos en paralelo mediante `ThreadPoolExecutor`.
+- Mostrar barras de progreso durante las conversiones y el renombrado.
+- Destacar menús, resultados, advertencias, errores y créditos finales con
+  colores cuando la terminal los admite.
 - Renombrar archivos recursivamente con prefijo y numeración correlativa.
 - Ejecutar conversión y renombrado en una única operación.
 - Usar nombres de salida incrementales sin sobrescribir archivos existentes.
@@ -59,7 +62,7 @@ Desarrollado por **Nicolás Butterfield**.
 - Pillow (se instala desde `requirements.txt`).
 - ExifTool: recomendado para auditar y necesario para una sanitización completa
   de bloques de metadatos que Pillow no reconoce.
-- `tqdm` es opcional y agrega barras de progreso durante las conversiones.
+- `tqdm` agrega barras de progreso durante las conversiones y el renombrado.
 
 ### Instalar ExifTool
 
